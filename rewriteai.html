@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RewriteAI — Rewrite Smarter with AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<style>
+/* ═══════════════════════════════════════════
+   CSS VARIABLES & RESET
+═══════════════════════════════════════════ */
+:root {
+  --bg: #020817;
+  --bg2: #030d1e;
+  --bg3: #040f24;
+  --surface: rgba(8, 24, 58, 0.7);
+  --surface2: rgba(10, 30, 70, 0.5);
+  --border: rgba(56, 139, 253, 0.18);
+  --border2: rgba(56, 139, 253, 0.35);
+  --text: #e8f0fe;
+  --text2: #8fb3d9;
+  --text3: #4a7fad;
+  --accent: #3b82f6;
+  --accent2: #60a5fa;
+  --accent3: #93c5fd;
+  --neon: #00d4ff;
+  --neon2: #0099ff;
+  --neon3: #4fc3f7;
+  --glow: rgba(59, 130, 246, 0.4);
+  --glow2: rgba(0, 212, 255, 0.25);
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --radius: 16px;
+  --radius2: 24px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  --shadow2: 0 0 40px rgba(59,130,246,0.15);
+  --glass: blur(20px) saturate(180%);
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --font: 'Sora', sans-serif;
+  --font2: 'Outfit', sans-serif;
+}
+
+[data-theme="light"] {
+  --bg: #f0f6ff;
+  --bg2: #e8f0fe;
+  --bg3: #dce8fd;
+  --surface: rgba(255,255,255,0.85);
+  --surface2: rgba(255,255,255,0.6);
+  --border: rgba(59,130,246,0.2);
+  --border2: rgba(59,130,246,0.4);
+  --text: #0f1c3a;
+  --text2: #3b5a8a;
+  --text3: #6b8fc4;
+  --glow: rgba(59,130,246,0.2);
+  --glow2: rgba(0,212,255,0.12);
+  --shadow: 0 8px 32px rgba(59,130,246,0.12);
+  --shadow2: 0 0 40px rgba(59,130,246,0.1);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+  line-height:1.6;
+  transition:background 0.4s ease, color 0.4s ease;
+}
+img{max-width:100%;height:auto;display:block}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:var(--font);border:none;outline:none}
+input,textarea{font-family:var(--font);outline:none}
+ul{list-style:none}
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════════ */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+
+/* ═══════════════════════════════════════════
+   CANVAS BACKGROUND
+═══════════════════════════════════════════ */
+#neural-canvas{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  z-index:0;pointer-events:none;opacity:0.55;
+}
+
+/* ═══════════════════════════════════════════
+   MESH GRADIENT OVERLAY
+═══════════════════════════════════════════ */
+.mesh-bg{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 20%, rgba(59,130,246,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0,212,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 50% 50%, rgba(96,165,250,0.04) 0%, transparent 70%);
+  animation:meshMove 20s ease-in-out infinite alternate;
+}
+@keyframes meshMove{
+  0%{background-position:0% 0%}
+  100%{background-position:100% 100%}
+}
+
+/* ═══════════════════════════════════════════
+   WRAPPER
+═══════════════════════════════════════════ */
+.wrapper{position:relative;z-index:2}
+
+/* ═══════════════════════════════════════════
+   NAVBAR
+═══════════════════════════════════════════ */
+.navbar{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  padding:0 5%;
+  height:72px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(2,8,23,0.6);
+  backdrop-filter:var(--glass);
+  -webkit-backdrop-filter:var(--glass);
+  border-bottom:1px solid var(--border);
+  transition:all var(--transition);
+}
+[data-theme="light"] .navbar{background:rgba(240,246,255,0.7)}
+.navbar.scrolled{
+  background:rgba(2,8,23,0.85);
+  border-bottom-color:var(--border2);
+  box-shadow:0 4px 30px rgba(0,0,0,0.3);
+}
+[data-theme="light"] .navbar.scrolled{background:rgba(240,246,255,0.9)}
+.nav-brand{
+  display:flex;align-items:center;gap:10px;
+  font-size:1.35rem;font-weight:700;letter-spacing:-0.02em;
+}
+.nav-brand .logo-icon{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--neon));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;color:#fff;
+  box-shadow:0 0 20px var(--glow);
+  animation:logoPulse 3s ease-in-out infinite;
+}
+@keyframes logoPulse{
+  0%,100%{box-shadow:0 0 20px var(--glow)}
+  50%{box-shadow:0 0 35px var(--glow),0 0 60px rgba(0,212,255,0.2)}
+}
+.nav-brand span{
+  background:linear-gradient(135deg,var(--text),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.nav-brand span b{color:var(--neon);-webkit-text-fill-color:var(--neon)}
+.nav-links{display:flex;align-items:center;gap:8px}
+.nav-links a{
+  padding:8px 16px;border-radius:8px;font-size:0.875rem;font-weight:500;
+  color:var(--text2);transition:all var(--transition);position:relative;
+}
+.nav-links a:hover{color:var(--text);background:var(--surface)}
+.nav-actions{display:flex;align-items:center;gap:12px}
+.btn-ghost{
+  padding:8px 18px;border-radius:8px;font-size:0.875rem;font-weight:500;
+  color:var(--text2);border:1px solid var(--border);background:transparent;
+  transition:all var(--transition);
+}
+.btn-ghost:hover{color:var(--accent2);border-color:var(--border2);background:var(--surface)}
+.btn-primary{
+  padding:9px 20px;border-radius:10px;font-size:0.875rem;font-weight:600;
+  background:linear-gradient(135deg,var(--accent),var(--neon2));
+  color:#fff;border:none;position:relative;overflow:hidden;
+  transition:all var(--transition);
+  box-shadow:0 4px 15px rgba(59,130,246,0.35);
+}
+.btn-primary::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--neon),var(--accent2));
+  opacity:0;transition:opacity var(--transition);
+}
+.btn-primary:hover::before{opacity:1}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 25px rgba(59,130,246,0.5)}
+.btn-primary span{position:relative;z-index:1}
+.theme-toggle{
+  width:40px;height:40px;border-radius:10px;border:1px solid var(--border);
+  background:var(--surface);display:flex;align-items:center;justify-content:center;
+  color:var(--text2);transition:all var(--transition);font-size:0.95rem;
+}
+.theme-toggle:hover{color:var(--accent2);border-color:var(--border2);background:var(--surface2)}
+.hamburger{
+  display:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--border);
+  background:var(--surface);align-items:center;justify-content:center;
+  color:var(--text2);flex-direction:column;gap:5px;padding:10px;
+}
+.hamburger span{
+  display:block;width:100%;height:2px;background:var(--text2);
+  border-radius:1px;transition:all var(--transition);
+}
+.hamburger.active span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.active span:nth-child(2){opacity:0}
+.hamburger.active span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.mobile-menu{
+  display:none;position:fixed;top:72px;left:0;right:0;z-index:999;
+  background:rgba(2,8,23,0.97);backdrop-filter:var(--glass);
+  border-bottom:1px solid var(--border);padding:16px 5% 24px;
+  flex-direction:column;gap:4px;
+}
+[data-theme="light"] .mobile-menu{background:rgba(240,246,255,0.97)}
+.mobile-menu.open{display:flex}
+.mobile-menu a{
+  padding:12px 16px;border-radius:10px;font-size:0.95rem;font-weight:500;
+  color:var(--text2);transition:all var(--transition);
+}
+.mobile-menu a:hover{color:var(--text);background:var(--surface)}
+.mobile-menu-actions{display:flex;gap:10px;margin-top:8px;padding:0 16px}
+.mobile-menu-actions button{flex:1}
+
+/* ═══════════════════════════════════════════
+   HERO SECTION
+═══════════════════════════════════════════ */
+.hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:120px 5% 80px;text-align:center;position:relative;overflow:hidden;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:7px 16px;border-radius:100px;margin-bottom:28px;
+  background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);
+  font-size:0.78rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  color:var(--accent3);animation:fadeDown 0.8s ease both;
+}
+.hero-badge .dot{
+  width:8px;height:8px;border-radius:50%;background:var(--neon);
+  animation:blink 1.5s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px var(--neon)}50%{opacity:0.4;box-shadow:none}}
+.hero h1{
+  font-size:clamp(2.6rem, 7vw, 5.5rem);font-weight:800;
+  line-height:1.08;letter-spacing:-0.03em;margin-bottom:12px;
+  animation:fadeUp 0.8s 0.2s ease both;
+}
+.hero h1 .gradient-text{
+  background:linear-gradient(135deg,#ffffff 0%,#93c5fd 40%,var(--neon) 70%,#a78bfa 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  display:inline-block;
+}
+.hero-typing{
+  font-size:clamp(1.1rem,2.5vw,1.6rem);font-weight:600;
+  color:var(--neon);min-height:2em;margin-bottom:20px;
+  animation:fadeUp 0.8s 0.35s ease both;
+}
+.hero-typing .cursor{
+  display:inline-block;width:3px;height:1em;background:var(--neon);
+  margin-left:3px;animation:cursorBlink 0.8s ease-in-out infinite;vertical-align:text-bottom;
+}
+@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
+.hero-desc{
+  font-size:clamp(0.95rem,2vw,1.15rem);color:var(--text2);max-width:600px;
+  margin:0 auto 40px;line-height:1.75;animation:fadeUp 0.8s 0.5s ease both;
+}
+.hero-ctas{
+  display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+  margin-bottom:60px;animation:fadeUp 0.8s 0.65s ease both;
+}
+.btn-hero-primary{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:15px 32px;border-radius:14px;font-size:1rem;font-weight:700;
+  background:linear-gradient(135deg,var(--accent),var(--neon2),var(--neon));
+  background-size:200% 200%;color:#fff;border:none;
+  animation:gradientShift 4s ease infinite;
+  box-shadow:0 6px 30px rgba(59,130,246,0.45),0 0 0 1px rgba(255,255,255,0.1) inset;
+  transition:all var(--transition);position:relative;overflow:hidden;
+}
+.btn-hero-primary::after{
+  content:'';position:absolute;top:-50%;left:-60%;width:40%;height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+  transform:skewX(-20deg);animation:shimmer 3s ease-in-out infinite;
+}
+@keyframes shimmer{0%{left:-60%}100%{left:120%}}
+@keyframes gradientShift{
+  0%,100%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+}
+.btn-hero-primary:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 10px 40px rgba(59,130,246,0.6)}
+.btn-hero-secondary{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:14px 32px;border-radius:14px;font-size:1rem;font-weight:600;
+  background:var(--surface);border:1px solid var(--border2);color:var(--text);
+  backdrop-filter:blur(10px);transition:all var(--transition);
+}
+.btn-hero-secondary:hover{background:var(--surface2);border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow2)}
+.hero-stats{
+  display:flex;justify-content:center;gap:40px;flex-wrap:wrap;
+  animation:fadeUp 0.8s 0.8s ease both;
+}
+.hero-stat{text-align:center}
+.hero-stat .num{
+  font-size:2rem;font-weight:800;letter-spacing:-0.02em;
+  background:linear-gradient(135deg,var(--text),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-stat .label{font-size:0.78rem;color:var(--text3);font-weight:500;margin-top:2px;text-transform:uppercase;letter-spacing:0.05em}
+.hero-divider{width:1px;height:40px;background:var(--border);align-self:center}
+
+/* Floating orbs */
+.hero-orbs{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1}
+.orb{
+  position:absolute;border-radius:50%;filter:blur(80px);opacity:0.25;
+  animation:orbFloat 12s ease-in-out infinite;
+}
+.orb1{width:400px;height:400px;background:radial-gradient(circle,var(--accent),transparent);top:-10%;left:-10%;animation-delay:0s}
+.orb2{width:300px;height:300px;background:radial-gradient(circle,var(--neon),transparent);top:30%;right:-10%;animation-delay:-4s}
+.orb3{width:250px;height:250px;background:radial-gradient(circle,#7c3aed,transparent);bottom:-10%;left:30%;animation-delay:-8s}
+@keyframes orbFloat{
+  0%,100%{transform:translate(0,0) scale(1)}
+  25%{transform:translate(30px,-20px) scale(1.05)}
+  50%{transform:translate(-20px,30px) scale(0.95)}
+  75%{transform:translate(-30px,-10px) scale(1.02)}
+}
+.scroll-indicator{
+  position:absolute;bottom:30px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  color:var(--text3);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;
+  animation:fadeUp 1s 1.2s ease both;cursor:pointer;
+}
+.scroll-indicator .scroll-wheel{
+  width:24px;height:38px;border:2px solid var(--border2);border-radius:12px;
+  position:relative;display:flex;justify-content:center;
+}
+.scroll-indicator .scroll-dot{
+  width:4px;height:8px;background:var(--accent2);border-radius:2px;
+  position:absolute;top:5px;animation:scrollDot 2s ease-in-out infinite;
+}
+@keyframes scrollDot{
+  0%{top:5px;opacity:1}
+  100%{top:20px;opacity:0}
+}
+
+/* ═══════════════════════════════════════════
+   TRUSTED BY MARQUEE
+═══════════════════════════════════════════ */
+.trusted{padding:48px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden}
+.trusted-label{
+  text-align:center;font-size:0.8rem;font-weight:600;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--text3);margin-bottom:32px;
+}
+.marquee-wrapper{position:relative;overflow:hidden}
+.marquee-wrapper::before,.marquee-wrapper::after{
+  content:'';position:absolute;top:0;bottom:0;z-index:2;width:200px;
+  pointer-events:none;
+}
+.marquee-wrapper::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
+.marquee-wrapper::after{right:0;background:linear-gradient(-90deg,var(--bg),transparent)}
+.marquee-track{
+  display:flex;gap:60px;align-items:center;
+  animation:marquee 30s linear infinite;
+  width:max-content;
+}
+.marquee-track:hover{animation-play-state:paused}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.marquee-item{
+  display:flex;align-items:center;gap:10px;
+  font-size:1.05rem;font-weight:700;color:var(--text3);
+  letter-spacing:-0.01em;padding:10px 20px;border-radius:10px;
+  border:1px solid transparent;transition:all var(--transition);white-space:nowrap;
+}
+.marquee-item:hover{color:var(--text);border-color:var(--border);background:var(--surface);box-shadow:var(--shadow2)}
+.marquee-item i{font-size:1.3rem;color:var(--accent)}
+
+/* ═══════════════════════════════════════════
+   SECTION SHARED
+═══════════════════════════════════════════ */
+.section{padding:100px 5%}
+.section-header{text-align:center;margin-bottom:64px}
+.section-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:100px;margin-bottom:16px;
+  background:rgba(59,130,246,0.1);border:1px solid var(--border);
+  font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent3);
+}
+.section-title{
+  font-size:clamp(2rem,4vw,3rem);font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin-bottom:16px;
+}
+.section-title .hl{
+  background:linear-gradient(135deg,var(--accent2),var(--neon));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.section-desc{
+  font-size:1.05rem;color:var(--text2);max-width:560px;margin:0 auto;line-height:1.7;
+}
+
+/* ═══════════════════════════════════════════
+   FEATURES
+═══════════════════════════════════════════ */
+.features-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;
+  max-width:1200px;margin:0 auto;
+}
+.feature-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);
+  padding:32px;position:relative;overflow:hidden;
+  transition:all var(--transition);cursor:default;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.feature-card::before{
+  content:'';position:absolute;inset:0;border-radius:var(--radius2);
+  background:linear-gradient(135deg,rgba(59,130,246,0.05),transparent);
+  opacity:0;transition:opacity var(--transition);
+}
+.feature-card:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,0.3),0 0 30px var(--glow)}
+.feature-card:hover::before{opacity:1}
+.feature-card .card-glow{
+  position:absolute;top:-20px;right:-20px;width:100px;height:100px;
+  border-radius:50%;opacity:0;transition:opacity 0.4s;
+  filter:blur(40px);
+}
+.feature-card:hover .card-glow{opacity:0.6}
+.feature-icon{
+  width:52px;height:52px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;color:#fff;margin-bottom:20px;position:relative;
+}
+.feature-icon::after{
+  content:'';position:absolute;inset:0;border-radius:14px;
+  background:inherit;filter:blur(15px);opacity:0.5;z-index:-1;
+}
+.feature-card h3{font-size:1.15rem;font-weight:700;margin-bottom:10px;letter-spacing:-0.01em}
+.feature-card p{font-size:0.9rem;color:var(--text2);line-height:1.65}
+.feature-tag{
+  display:inline-block;margin-top:16px;padding:4px 10px;border-radius:100px;
+  font-size:0.72rem;font-weight:600;letter-spacing:0.05em;
+  background:rgba(59,130,246,0.15);color:var(--accent3);border:1px solid var(--border);
+}
+
+/* ═══════════════════════════════════════════
+   AI PLAYGROUND
+═══════════════════════════════════════════ */
+.playground{padding:100px 5%;background:var(--bg2)}
+[data-theme="light"] .playground{background:var(--bg3)}
+.playground-card{
+  max-width:1000px;margin:0 auto;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius2);overflow:hidden;
+  box-shadow:var(--shadow),var(--shadow2);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+.playground-header{
+  padding:20px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+}
+.pg-title{display:flex;align-items:center;gap:10px;font-size:1rem;font-weight:700}
+.pg-dot{width:10px;height:10px;border-radius:50%;background:var(--neon);animation:blink 2s ease-in-out infinite}
+.pg-api-status{
+  display:flex;align-items:center;gap:8px;font-size:0.78rem;font-weight:500;
+  padding:5px 12px;border-radius:100px;border:1px solid var(--border);background:var(--surface2);
+  color:var(--text3);cursor:pointer;transition:all var(--transition);
+}
+.pg-api-status:hover{border-color:var(--border2);color:var(--text2)}
+.pg-api-status .status-dot{width:7px;height:7px;border-radius:50%;background:var(--warning)}
+.pg-api-status.connected .status-dot{background:var(--success)}
+.pg-body{display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+@media(max-width:700px){.pg-body{grid-template-columns:1fr}}
+.pg-panel{padding:20px 24px;display:flex;flex-direction:column;gap:12px}
+.pg-panel:first-child{border-right:1px solid var(--border)}
+@media(max-width:700px){.pg-panel:first-child{border-right:none;border-bottom:1px solid var(--border)}}
+.pg-label{font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3)}
+.pg-textarea{
+  flex:1;width:100%;padding:14px;border-radius:12px;resize:none;min-height:200px;
+  background:rgba(0,0,0,0.2);border:1px solid var(--border);color:var(--text);
+  font-size:0.9rem;line-height:1.6;transition:all var(--transition);
+}
+[data-theme="light"] .pg-textarea{background:rgba(255,255,255,0.6)}
+.pg-textarea:focus{border-color:var(--border2);box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
+.pg-textarea::placeholder{color:var(--text3)}
+.pg-chars{font-size:0.72rem;color:var(--text3);text-align:right}
+.pg-footer{
+  padding:16px 24px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+}
+.pg-actions{display:flex;gap:8px;flex-wrap:wrap}
+.pg-btn{
+  padding:9px 16px;border-radius:10px;font-size:0.82rem;font-weight:600;
+  border:1px solid var(--border);background:var(--surface2);color:var(--text2);
+  transition:all var(--transition);display:flex;align-items:center;gap:7px;
+}
+.pg-btn:hover{color:var(--text);border-color:var(--border2);background:var(--surface);transform:translateY(-1px)}
+.pg-btn.active{border-color:var(--accent);color:var(--accent2);background:rgba(59,130,246,0.12)}
+.pg-btn-primary{
+  padding:10px 22px;border-radius:10px;font-size:0.88rem;font-weight:700;
+  background:linear-gradient(135deg,var(--accent),var(--neon2));color:#fff;border:none;
+  box-shadow:0 4px 15px rgba(59,130,246,0.4);transition:all var(--transition);
+  display:flex;align-items:center;gap:8px;position:relative;overflow:hidden;
+}
+.pg-btn-primary::after{
+  content:'';position:absolute;top:-50%;left:-60%;width:40%;height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+  transform:skewX(-20deg);
+}
+.pg-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(59,130,246,0.55)}
+.pg-btn-primary:hover::after{animation:shimmer 1s ease-in-out}
+.pg-secondary-actions{display:flex;gap:8px}
+.pg-icon-btn{
+  width:38px;height:38px;border-radius:10px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text3);display:flex;align-items:center;
+  justify-content:center;font-size:0.9rem;transition:all var(--transition);
+}
+.pg-icon-btn:hover{color:var(--text2);border-color:var(--border2);background:var(--surface)}
+
+/* API Config Modal */
+.api-modal{
+  position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+  padding:20px;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);
+  opacity:0;pointer-events:none;transition:opacity var(--transition);
+}
+.api-modal.open{opacity:1;pointer-events:all}
+.api-modal-card{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius2);
+  padding:32px;max-width:480px;width:100%;
+  box-shadow:0 25px 80px rgba(0,0,0,0.6);
+  transform:translateY(20px);transition:transform var(--transition);
+}
+.api-modal.open .api-modal-card{transform:translateY(0)}
+.api-modal h3{font-size:1.2rem;font-weight:700;margin-bottom:6px}
+.api-modal p{font-size:0.88rem;color:var(--text2);margin-bottom:20px;line-height:1.6}
+.api-field{margin-bottom:16px}
+.api-field label{display:block;font-size:0.8rem;font-weight:600;color:var(--text2);margin-bottom:8px;letter-spacing:0.03em}
+.api-field input{
+  width:100%;padding:11px 14px;border-radius:10px;
+  background:rgba(0,0,0,0.2);border:1px solid var(--border);color:var(--text);
+  font-size:0.9rem;transition:all var(--transition);
+}
+[data-theme="light"] .api-field input{background:rgba(255,255,255,0.6)}
+.api-field input:focus{border-color:var(--border2);box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
+.api-modal-actions{display:flex;gap:10px;margin-top:8px}
+.api-modal-actions button{flex:1;padding:11px;border-radius:10px;font-size:0.9rem;font-weight:600}
+
+/* Output shimmer */
+.shimmer{
+  background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);
+  background-size:200% 100%;animation:shimmerAnim 1.5s infinite;border-radius:6px;
+}
+@keyframes shimmerAnim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.shimmer-line{height:14px;margin-bottom:10px;border-radius:4px}
+
+/* Loading spinner */
+.spin{animation:spinAnim 0.8s linear infinite;display:inline-block}
+@keyframes spinAnim{100%{transform:rotate(360deg)}}
+
+/* Toast */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px}
+.toast{
+  min-width:260px;padding:14px 18px;border-radius:12px;
+  display:flex;align-items:center;gap:10px;font-size:0.875rem;font-weight:500;
+  background:var(--bg2);border:1px solid var(--border2);
+  box-shadow:0 8px 30px rgba(0,0,0,0.4);
+  animation:toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.hide{animation:toastOut 0.3s ease both}
+@keyframes toastOut{to{transform:translateX(110%);opacity:0}}
+.toast.success{border-color:rgba(16,185,129,0.4)}
+.toast.error{border-color:rgba(239,68,68,0.4)}
+.toast.info{border-color:rgba(59,130,246,0.4)}
+.toast-icon.success{color:var(--success)}
+.toast-icon.error{color:var(--error)}
+.toast-icon.info{color:var(--accent2)}
+
+/* ═══════════════════════════════════════════
+   DASHBOARD PREVIEW
+═══════════════════════════════════════════ */
+.dashboard{padding:100px 5%}
+.dashboard-preview{
+  max-width:1100px;margin:0 auto;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);
+  overflow:hidden;box-shadow:var(--shadow),0 0 60px rgba(59,130,246,0.08);
+}
+.db-topbar{
+  padding:14px 20px;background:rgba(0,0,0,0.15);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+}
+.db-dot{width:12px;height:12px;border-radius:50%}
+.db-dot.red{background:#ef4444}
+.db-dot.yellow{background:#f59e0b}
+.db-dot.green{background:#10b981}
+.db-url{
+  flex:1;background:rgba(0,0,0,0.2);border:1px solid var(--border);
+  border-radius:6px;padding:5px 12px;font-size:0.78rem;color:var(--text3);
+  text-align:center;margin:0 12px;
+}
+.db-body{display:grid;grid-template-columns:200px 1fr;min-height:440px}
+@media(max-width:700px){.db-body{grid-template-columns:1fr}}
+.db-sidebar{
+  border-right:1px solid var(--border);padding:20px 16px;
+  background:rgba(0,0,0,0.1);
+}
+.db-nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;
+  font-size:0.82rem;font-weight:500;color:var(--text3);margin-bottom:4px;cursor:pointer;
+  transition:all var(--transition);
+}
+.db-nav-item:hover,.db-nav-item.active{background:rgba(59,130,246,0.15);color:var(--accent2)}
+.db-nav-item.active{border-left:2px solid var(--accent)}
+.db-main{padding:24px;display:flex;flex-direction:column;gap:20px}
+.db-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:500px){.db-grid{grid-template-columns:1fr 1fr}}
+.db-metric{
+  background:rgba(0,0,0,0.15);border:1px solid var(--border);border-radius:12px;
+  padding:16px;transition:all var(--transition);cursor:default;
+}
+.db-metric:hover{border-color:var(--border2);background:rgba(59,130,246,0.06)}
+.db-metric .m-label{font-size:0.72rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
+.db-metric .m-val{font-size:1.5rem;font-weight:800;letter-spacing:-0.03em}
+.db-metric .m-change{font-size:0.72rem;color:var(--success);margin-top:2px}
+.db-activity{background:rgba(0,0,0,0.1);border:1px solid var(--border);border-radius:12px;padding:18px}
+.db-activity h4{font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3);margin-bottom:14px}
+.activity-item{
+  display:flex;align-items:center;gap:12px;padding:8px 0;
+  border-bottom:1px solid var(--border);font-size:0.83rem;color:var(--text2);
+}
+.activity-item:last-child{border-bottom:none}
+.activity-icon{
+  width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:0.75rem;flex-shrink:0;
+}
+
+/* ═══════════════════════════════════════════
+   WHY SECTION
+═══════════════════════════════════════════ */
+.why{padding:100px 5%;background:var(--bg3)}
+[data-theme="light"] .why{background:var(--bg2)}
+.why-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:60px;max-width:1100px;margin:0 auto;align-items:center;
+}
+@media(max-width:900px){.why-grid{grid-template-columns:1fr}}
+.why-visual{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);
+  padding:32px;display:flex;flex-direction:column;gap:16px;
+  box-shadow:var(--shadow2);
+}
+.why-item{
+  display:flex;align-items:flex-start;gap:16px;padding:16px;border-radius:12px;
+  border:1px solid transparent;transition:all var(--transition);cursor:default;
+}
+.why-item:hover{border-color:var(--border);background:rgba(59,130,246,0.06)}
+.why-item-icon{
+  width:44px;height:44px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#fff;
+}
+.why-item h4{font-size:0.95rem;font-weight:700;margin-bottom:4px}
+.why-item p{font-size:0.85rem;color:var(--text2);line-height:1.6}
+.why-content .section-badge{margin-bottom:16px}
+.why-content .section-title{text-align:left}
+.why-content .section-desc{text-align:left;margin:0 0 32px}
+.why-stats{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+.why-stat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:20px;text-align:center;transition:all var(--transition);
+}
+.why-stat-card:hover{border-color:var(--border2);box-shadow:var(--shadow2)}
+.why-stat-card .num{font-size:2.2rem;font-weight:800;letter-spacing:-0.03em;background:linear-gradient(135deg,var(--accent2),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.why-stat-card .label{font-size:0.78rem;color:var(--text3);margin-top:4px}
+
+/* ═══════════════════════════════════════════
+   TESTIMONIALS
+═══════════════════════════════════════════ */
+.testimonials{padding:100px 5%}
+.testi-carousel{
+  max-width:1100px;margin:0 auto;position:relative;
+}
+.testi-track{
+  display:flex;gap:20px;overflow:hidden;
+}
+.testi-cards-wrapper{display:flex;gap:20px;transition:transform 0.5s cubic-bezier(0.4,0,0.2,1)}
+.testi-card{
+  flex-shrink:0;width:320px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius2);padding:28px;
+  transition:all var(--transition);backdrop-filter:blur(12px);
+}
+.testi-card:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:0 20px 50px rgba(0,0,0,0.25),var(--shadow2)}
+.testi-stars{display:flex;gap:3px;color:#f59e0b;font-size:0.85rem;margin-bottom:16px}
+.testi-text{font-size:0.9rem;color:var(--text2);line-height:1.7;margin-bottom:20px;font-style:italic}
+.testi-author{display:flex;align-items:center;gap:12px}
+.testi-avatar{
+  width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:1rem;font-weight:700;color:#fff;flex-shrink:0;
+}
+.testi-name{font-size:0.88rem;font-weight:700}
+.testi-role{font-size:0.76rem;color:var(--text3)}
+.testi-controls{
+  display:flex;justify-content:center;gap:10px;margin-top:32px;
+}
+.testi-btn{
+  width:40px;height:40px;border-radius:50%;border:1px solid var(--border);
+  background:var(--surface);color:var(--text2);display:flex;align-items:center;justify-content:center;
+  font-size:0.9rem;transition:all var(--transition);
+}
+.testi-btn:hover{border-color:var(--accent);color:var(--accent2);background:rgba(59,130,246,0.12)}
+.testi-dots{display:flex;align-items:center;gap:6px}
+.testi-dot{width:6px;height:6px;border-radius:3px;background:var(--border);transition:all 0.3s;cursor:pointer}
+.testi-dot.active{width:20px;background:var(--accent)}
+
+/* ═══════════════════════════════════════════
+   FAQ
+═══════════════════════════════════════════ */
+.faq{padding:100px 5%;background:var(--bg2)}
+[data-theme="light"] .faq{background:var(--bg3)}
+.faq-list{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.faq-item{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  overflow:hidden;transition:all var(--transition);
+}
+.faq-item.open{border-color:var(--border2);box-shadow:var(--shadow2)}
+.faq-q{
+  width:100%;padding:20px 24px;text-align:left;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;background:transparent;color:var(--text);
+  font-size:0.95rem;font-weight:600;transition:all var(--transition);
+}
+.faq-q:hover{color:var(--accent2)}
+.faq-icon{
+  width:28px;height:28px;border-radius:8px;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-size:0.75rem;color:var(--text3);transition:all var(--transition);
+}
+.faq-item.open .faq-icon{background:rgba(59,130,246,0.15);border-color:var(--accent);color:var(--accent2);transform:rotate(45deg)}
+.faq-a{
+  max-height:0;overflow:hidden;transition:max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+.faq-item.open .faq-a{max-height:200px}
+.faq-a-inner{padding:0 24px 20px;font-size:0.88rem;color:var(--text2);line-height:1.75}
+
+/* ═══════════════════════════════════════════
+   SUBSCRIBE
+═══════════════════════════════════════════ */
+.subscribe{
+  padding:80px 5%;
+  background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(0,212,255,0.05));
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+}
+.subscribe-card{
+  max-width:600px;margin:0 auto;text-align:center;
+}
+.subscribe-card h2{font-size:2.2rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:12px}
+.subscribe-card p{font-size:0.95rem;color:var(--text2);margin-bottom:32px;line-height:1.7}
+.subscribe-form{display:flex;gap:10px;max-width:440px;margin:0 auto}
+@media(max-width:500px){.subscribe-form{flex-direction:column}}
+.subscribe-input{
+  flex:1;padding:13px 18px;border-radius:12px;
+  background:var(--surface);border:1px solid var(--border);color:var(--text);
+  font-size:0.9rem;transition:all var(--transition);
+}
+.subscribe-input:focus{border-color:var(--border2);box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
+.subscribe-input::placeholder{color:var(--text3)}
+.subscribe-btn{
+  padding:13px 24px;border-radius:12px;font-size:0.9rem;font-weight:700;
+  background:linear-gradient(135deg,var(--accent),var(--neon2));color:#fff;border:none;
+  box-shadow:0 4px 15px rgba(59,130,246,0.4);transition:all var(--transition);white-space:nowrap;
+}
+.subscribe-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(59,130,246,0.55)}
+
+/* ═══════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════ */
+footer{
+  padding:60px 5% 32px;border-top:1px solid var(--border);
+}
+.footer-grid{
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px;
+}
+@media(max-width:900px){.footer-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.footer-grid{grid-template-columns:1fr}}
+.footer-brand{display:flex;flex-direction:column;gap:16px}
+.footer-brand .nav-brand{font-size:1.2rem}
+.footer-tagline{font-size:0.85rem;color:var(--text2);line-height:1.65;max-width:280px}
+.footer-socials{display:flex;gap:10px;margin-top:4px}
+.social-btn{
+  width:36px;height:36px;border-radius:9px;border:1px solid var(--border);
+  background:var(--surface);display:flex;align-items:center;justify-content:center;
+  font-size:0.9rem;color:var(--text3);transition:all var(--transition);
+}
+.social-btn:hover{color:var(--accent2);border-color:var(--border2);background:rgba(59,130,246,0.12);transform:translateY(-2px)}
+.footer-col h5{font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:16px}
+.footer-col ul{display:flex;flex-direction:column;gap:8px}
+.footer-col a{font-size:0.87rem;color:var(--text2);transition:all var(--transition)}
+.footer-col a:hover{color:var(--accent2);padding-left:4px}
+.footer-bottom{
+  border-top:1px solid var(--border);padding-top:24px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+}
+.footer-copy{font-size:0.8rem;color:var(--text3)}
+.footer-bottom-links{display:flex;gap:20px}
+.footer-bottom-links a{font-size:0.8rem;color:var(--text3);transition:color var(--transition)}
+.footer-bottom-links a:hover{color:var(--accent2)}
+
+/* ═══════════════════════════════════════════
+   REVEAL ANIMATIONS
+═══════════════════════════════════════════ */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity 0.7s ease,transform 0.7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-left{opacity:0;transform:translateX(-30px);transition:opacity 0.7s ease,transform 0.7s ease}
+.reveal-left.visible{opacity:1;transform:translateX(0)}
+.reveal-right{opacity:0;transform:translateX(30px);transition:opacity 0.7s ease,transform 0.7s ease}
+.reveal-right.visible{opacity:1;transform:translateX(0)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Stagger delays */
+.delay-1{transition-delay:0.1s!important}
+.delay-2{transition-delay:0.2s!important}
+.delay-3{transition-delay:0.3s!important}
+.delay-4{transition-delay:0.4s!important}
+.delay-5{transition-delay:0.5s!important}
+
+/* Parallax */
+.parallax{will-change:transform}
+
+/* Mouse glow */
+.mouse-glow{
+  position:fixed;pointer-events:none;z-index:3;
+  width:400px;height:400px;border-radius:50%;
+  background:radial-gradient(circle,rgba(59,130,246,0.07) 0%,transparent 70%);
+  transform:translate(-50%,-50%);
+  transition:opacity 0.3s;
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media(max-width:1024px){
+  .nav-links{display:none}
+  .hamburger{display:flex}
+  .hero-stats{gap:24px}
+  .hero-divider{display:none}
+}
+@media(max-width:768px){
+  .section{padding:72px 5%}
+  .features-grid{grid-template-columns:1fr}
+  .why-grid{gap:40px}
+  .footer-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){
+  .hero h1{font-size:2.2rem}
+  .hero-ctas{flex-direction:column;align-items:center}
+  .btn-hero-primary,.btn-hero-secondary{width:100%;justify-content:center}
+}
+
+/* Color variants for feature icons / activity */
+.c-blue{background:linear-gradient(135deg,#3b82f6,#2563eb)}
+.c-cyan{background:linear-gradient(135deg,#06b6d4,#0891b2)}
+.c-violet{background:linear-gradient(135deg,#8b5cf6,#7c3aed)}
+.c-emerald{background:linear-gradient(135deg,#10b981,#059669)}
+.c-amber{background:linear-gradient(135deg,#f59e0b,#d97706)}
+.c-rose{background:linear-gradient(135deg,#f43f5e,#e11d48)}
+.c-indigo{background:linear-gradient(135deg,#6366f1,#4f46e5)}
+.c-sky{background:linear-gradient(135deg,#0ea5e9,#0284c7)}
+
+/* Glow colors */
+.g-blue{background:rgba(59,130,246,0.6)}
+.g-cyan{background:rgba(6,182,212,0.6)}
+.g-violet{background:rgba(139,92,246,0.6)}
+.g-emerald{background:rgba(16,185,129,0.6)}
+.g-amber{background:rgba(245,158,11,0.6)}
+.g-rose{background:rgba(244,63,94,0.6)}
+</style>
+</head>
+<body>
+
+<!-- Neural Canvas Background -->
+<canvas id="neural-canvas"></canvas>
+<div class="mesh-bg"></div>
+
+<!-- Mouse Glow -->
+<div class="mouse-glow" id="mouse-glow"></div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- API Config Modal -->
+<div class="api-modal" id="api-modal">
+  <div class="api-modal-card">
+    <h3>⚙️ Configure API Keys</h3>
+    <p>Add your API keys to unlock live AI features. Keys are stored locally in your browser and never sent to any server other than the respective APIs.</p>
+    <div class="api-field">
+      <label>OpenRouter API Key <span style="color:var(--text3)">(for AI rewrites)</span></label>
+      <input type="password" id="openrouter-key" placeholder="sk-or-v1-..." />
+    </div>
+    <div class="api-field">
+      <label>LanguageTool <span style="color:var(--text3)">(auto-detected, no key needed)</span></label>
+      <input type="text" value="Public API — No key required" disabled style="opacity:0.5" />
+    </div>
+    <div class="api-modal-actions">
+      <button class="btn-ghost" onclick="closeApiModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveApiKeys()"><span>Save Keys</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Wrapper -->
+<div class="wrapper">
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<nav class="navbar" id="navbar">
+  <div class="nav-brand">
+    <div class="logo-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+    <span>Rewrite<b>AI</b></span>
+  </div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#playground">Playground</a>
+    <a href="#dashboard">Dashboard</a>
+    <a href="#why">Why Us</a>
+    <a href="#faq">FAQ</a>
+  </div>
+  <div class="nav-actions">
+    <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+      <i class="fas fa-moon" id="theme-icon"></i>
+    </button>
+    <button class="btn-ghost">Sign in</button>
+    <button class="btn-primary" onclick="document.getElementById('playground').scrollIntoView({behavior:'smooth'})"><span>Try Free</span></button>
+    <button class="hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#features" onclick="closeMobileMenu()">Features</a>
+  <a href="#playground" onclick="closeMobileMenu()">Playground</a>
+  <a href="#dashboard" onclick="closeMobileMenu()">Dashboard</a>
+  <a href="#why" onclick="closeMobileMenu()">Why Us</a>
+  <a href="#faq" onclick="closeMobileMenu()">FAQ</a>
+  <div class="mobile-menu-actions">
+    <button class="btn-ghost" style="width:100%">Sign in</button>
+    <button class="btn-primary" style="width:100%" onclick="document.getElementById('playground').scrollIntoView({behavior:'smooth'});closeMobileMenu()"><span>Try Free</span></button>
+  </div>
+</div>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero" id="home">
+  <div class="hero-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+  <div>
+    <div class="hero-badge"><span class="dot"></span> Powered by Advanced AI — Now in Beta</div>
+    <h1>RewriteAI — <span class="gradient-text">Rewrite Smarter</span><br/>with AI</h1>
+    <div class="hero-typing">
+      <span id="typing-text"></span><span class="cursor"></span>
+    </div>
+    <p class="hero-desc">The ultimate AI writing platform. Rewrite, polish, summarize, and generate content with state-of-the-art language models. 10× your writing productivity in seconds.</p>
+    <div class="hero-ctas">
+      <button class="btn-hero-primary" onclick="document.getElementById('playground').scrollIntoView({behavior:'smooth'})">
+        <i class="fas fa-wand-magic-sparkles"></i> Start Writing Free
+      </button>
+      <button class="btn-hero-secondary" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">
+        <i class="fas fa-play-circle"></i> See How It Works
+      </button>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num" data-count="2400000">0</div><div class="label">Documents Rewritten</div></div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat"><div class="num" data-count="98">0</div><div class="label">% Accuracy Rate</div></div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat"><div class="num" data-count="150000">0</div><div class="label">Active Users</div></div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat"><div class="num" data-count="4.9">0</div><div class="label">Star Rating</div></div>
+    </div>
+  </div>
+  <div class="scroll-indicator" onclick="document.getElementById('trusted').scrollIntoView({behavior:'smooth'})">
+    <div class="scroll-wheel"><div class="scroll-dot"></div></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- ═══════════ TRUSTED BY ═══════════ -->
+<div class="trusted" id="trusted">
+  <div class="trusted-label">Trusted by teams at the world's best companies</div>
+  <div class="marquee-wrapper">
+    <div class="marquee-track" id="marquee-track">
+      <!-- Items injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ FEATURES ═══════════ -->
+<section class="section" id="features">
+  <div class="section-header reveal">
+    <div class="section-badge"><i class="fas fa-bolt"></i> Core Features</div>
+    <h2 class="section-title">Everything you need to <span class="hl">write brilliantly</span></h2>
+    <p class="section-desc">Six powerful AI tools, one seamless platform. Built for writers, marketers, students, and developers.</p>
+  </div>
+  <div class="features-grid" id="features-grid"></div>
+</section>
+
+<!-- ═══════════ PLAYGROUND ═══════════ -->
+<section class="playground" id="playground">
+  <div class="section-header reveal">
+    <div class="section-badge"><i class="fas fa-flask"></i> Live AI Playground</div>
+    <h2 class="section-title">Try it <span class="hl">right now</span></h2>
+    <p class="section-desc">No sign-up needed. Paste your text and let RewriteAI transform it instantly.</p>
+  </div>
+  <div class="playground-card reveal">
+    <div class="playground-header">
+      <div class="pg-title"><div class="pg-dot"></div> RewriteAI Playground</div>
+      <button class="pg-api-status" id="api-status-btn" onclick="openApiModal()">
+        <span class="status-dot"></span> <span id="api-status-text">Configure API</span>
+      </button>
+    </div>
+    <div class="pg-body">
+      <div class="pg-panel">
+        <div class="pg-label">Input Text</div>
+        <textarea class="pg-textarea" id="pg-input" placeholder="Paste or type your content here…&#10;&#10;Example: &quot;The meeting was bad and nobody was happy with the results.&quot;"></textarea>
+        <div class="pg-chars"><span id="input-chars">0</span> / 5000 characters</div>
+      </div>
+      <div class="pg-panel">
+        <div class="pg-label">AI Output</div>
+        <textarea class="pg-textarea" id="pg-output" placeholder="Your AI-enhanced content will appear here…" readonly></textarea>
+        <div class="pg-chars"><span id="output-chars">0</span> characters</div>
+      </div>
+    </div>
+    <div class="pg-footer">
+      <div class="pg-actions" id="pg-actions">
+        <button class="pg-btn" data-action="rewrite"><i class="fas fa-wand-magic-sparkles"></i> Rewrite</button>
+        <button class="pg-btn" data-action="grammar"><i class="fas fa-spell-check"></i> Fix Grammar</button>
+        <button class="pg-btn" data-action="tone"><i class="fas fa-sliders"></i> Improve Tone</button>
+        <button class="pg-btn" data-action="summarize"><i class="fas fa-compress-alt"></i> Summarize</button>
+        <button class="pg-btn" data-action="ideas"><i class="fas fa-lightbulb"></i> Generate Ideas</button>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div class="pg-secondary-actions">
+          <button class="pg-icon-btn" onclick="copyOutput()" title="Copy output"><i class="fas fa-copy"></i></button>
+          <button class="pg-icon-btn" onclick="clearAll()" title="Clear all"><i class="fas fa-trash"></i></button>
+        </div>
+        <button class="pg-btn-primary" id="run-btn" onclick="runAction()">
+          <i class="fas fa-bolt"></i> Run AI
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ DASHBOARD PREVIEW ═══════════ -->
+<section class="dashboard" id="dashboard">
+  <div class="section-header reveal">
+    <div class="section-badge"><i class="fas fa-chart-line"></i> Dashboard Preview</div>
+    <h2 class="section-title">Track your <span class="hl">writing insights</span></h2>
+    <p class="section-desc">Monitor your productivity, writing habits, and AI usage with a beautiful real-time dashboard.</p>
+  </div>
+  <div class="dashboard-preview reveal">
+    <div class="db-topbar">
+      <div class="db-dot red"></div><div class="db-dot yellow"></div><div class="db-dot green"></div>
+      <div class="db-url">app.rewriteai.io/dashboard</div>
+    </div>
+    <div class="db-body">
+      <div class="db-sidebar">
+        <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:12px;padding:0 12px">Menu</div>
+        <div class="db-nav-item active"><i class="fas fa-chart-pie" style="width:16px"></i> Overview</div>
+        <div class="db-nav-item"><i class="fas fa-file-pen" style="width:16px"></i> Documents</div>
+        <div class="db-nav-item"><i class="fas fa-wand-sparkles" style="width:16px"></i> AI Tools</div>
+        <div class="db-nav-item"><i class="fas fa-clock-rotate-left" style="width:16px"></i> History</div>
+        <div class="db-nav-item"><i class="fas fa-cog" style="width:16px"></i> Settings</div>
+      </div>
+      <div class="db-main">
+        <div class="db-grid">
+          <div class="db-metric"><div class="m-label">Rewrites</div><div class="m-val">1,284</div><div class="m-change">↑ 12% this week</div></div>
+          <div class="db-metric"><div class="m-label">Words Fixed</div><div class="m-val">48.2K</div><div class="m-change">↑ 8% this week</div></div>
+          <div class="db-metric"><div class="m-label">Time Saved</div><div class="m-val">6.4h</div><div class="m-change">↑ 23% this week</div></div>
+        </div>
+        <div class="db-activity">
+          <h4>Recent Activity</h4>
+          <div class="activity-item"><div class="activity-icon c-blue"><i class="fas fa-wand-magic-sparkles"></i></div><span>Blog post rewritten — "10 Tips for Productivity"</span><span style="margin-left:auto;color:var(--text3);font-size:0.75rem">2m ago</span></div>
+          <div class="activity-item"><div class="activity-icon c-emerald"><i class="fas fa-spell-check"></i></div><span>Grammar check — Marketing email</span><span style="margin-left:auto;color:var(--text3);font-size:0.75rem">15m ago</span></div>
+          <div class="activity-item"><div class="activity-icon c-violet"><i class="fas fa-compress-alt"></i></div><span>Summarized — 2,400 word report</span><span style="margin-left:auto;color:var(--text3);font-size:0.75rem">1h ago</span></div>
+          <div class="activity-item"><div class="activity-icon c-amber"><i class="fas fa-lightbulb"></i></div><span>Generated 5 ideas — Newsletter topic</span><span style="margin-left:auto;color:var(--text3);font-size:0.75rem">3h ago</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ WHY SECTION ═══════════ -->
+<section class="why" id="why">
+  <div class="why-grid">
+    <div class="why-visual reveal-left">
+      <div class="why-item">
+        <div class="why-item-icon c-blue"><i class="fas fa-rocket"></i></div>
+        <div><h4>Lightning Fast Processing</h4><p>Sub-second AI responses powered by the latest language models. No more waiting.</p></div>
+      </div>
+      <div class="why-item">
+        <div class="why-item-icon c-cyan"><i class="fas fa-shield-halved"></i></div>
+        <div><h4>Privacy-First Architecture</h4><p>Your content is never stored or used for training. 100% encrypted in transit.</p></div>
+      </div>
+      <div class="why-item">
+        <div class="why-item-icon c-violet"><i class="fas fa-language"></i></div>
+        <div><h4>50+ Languages Supported</h4><p>Rewrite, fix, and improve content in any major world language seamlessly.</p></div>
+      </div>
+      <div class="why-item">
+        <div class="why-item-icon c-emerald"><i class="fas fa-plug"></i></div>
+        <div><h4>API & Integration Ready</h4><p>Connect to Notion, Google Docs, Slack, and 100+ apps via our REST API.</p></div>
+      </div>
+    </div>
+    <div class="why-content reveal-right">
+      <div class="section-badge"><i class="fas fa-star"></i> Why RewriteAI</div>
+      <h2 class="section-title">The writing tool that <span class="hl">understands context</span></h2>
+      <p class="section-desc">Unlike simple grammar checkers, RewriteAI understands meaning, style, and intent — delivering rewrites that sound genuinely human.</p>
+      <div class="why-stats">
+        <div class="why-stat-card"><div class="num">10×</div><div class="label">Faster than manual editing</div></div>
+        <div class="why-stat-card"><div class="num">99%</div><div class="label">User satisfaction rate</div></div>
+        <div class="why-stat-card"><div class="num">50+</div><div class="label">Languages supported</div></div>
+        <div class="why-stat-card"><div class="num">24/7</div><div class="label">Always available</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TESTIMONIALS ═══════════ -->
+<section class="testimonials" id="testimonials">
+  <div class="section-header reveal">
+    <div class="section-badge"><i class="fas fa-heart"></i> Testimonials</div>
+    <h2 class="section-title">Loved by <span class="hl">thousands of writers</span></h2>
+    <p class="section-desc">See what our community of writers, marketers, and students are saying.</p>
+  </div>
+  <div class="testi-carousel reveal">
+    <div class="testi-track">
+      <div class="testi-cards-wrapper" id="testi-wrapper"></div>
+    </div>
+    <div class="testi-controls">
+      <button class="testi-btn" id="testi-prev"><i class="fas fa-chevron-left"></i></button>
+      <div class="testi-dots" id="testi-dots"></div>
+      <button class="testi-btn" id="testi-next"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FAQ ═══════════ -->
+<section class="faq" id="faq">
+  <div class="section-header reveal">
+    <div class="section-badge"><i class="fas fa-circle-question"></i> FAQ</div>
+    <h2 class="section-title">Common <span class="hl">questions answered</span></h2>
+    <p class="section-desc">Everything you need to know about RewriteAI.</p>
+  </div>
+  <div class="faq-list" id="faq-list"></div>
+</section>
+
+<!-- ═══════════ SUBSCRIBE ═══════════ -->
+<section class="subscribe">
+  <div class="subscribe-card reveal">
+    <div class="section-badge" style="margin-bottom:16px"><i class="fas fa-envelope"></i> Stay Updated</div>
+    <h2>Start writing smarter <span class="hl">today</span></h2>
+    <p>Join 150,000+ writers who use RewriteAI to produce better content, faster. Get early access to new features and exclusive writing tips.</p>
+    <div class="subscribe-form">
+      <input class="subscribe-input" type="email" id="sub-email" placeholder="Enter your email address…" />
+      <button class="subscribe-btn" onclick="handleSubscribe()">Get Access <i class="fas fa-arrow-right" style="margin-left:6px"></i></button>
+    </div>
+    <p style="font-size:0.75rem;color:var(--text3);margin-top:14px">No spam, ever. Unsubscribe anytime. 🔒</p>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-brand">
+        <div class="logo-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+        <span>Rewrite<b>AI</b></span>
+      </div>
+      <p class="footer-tagline">The most advanced AI writing platform. Rewrite, polish, and generate content that captivates readers.</p>
+      <div class="footer-socials">
+        <a class="social-btn" href="#" title="Twitter"><i class="fab fa-x-twitter"></i></a>
+        <a class="social-btn" href="#" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+        <a class="social-btn" href="#" title="GitHub"><i class="fab fa-github"></i></a>
+        <a class="social-btn" href="#" title="Discord"><i class="fab fa-discord"></i></a>
+        <a class="social-btn" href="#" title="YouTube"><i class="fab fa-youtube"></i></a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h5>Product</h5>
+      <ul>
+        <li><a href="#">Features</a></li>
+        <li><a href="#">Playground</a></li>
+        <li><a href="#">API Access</a></li>
+        <li><a href="#">Integrations</a></li>
+        <li><a href="#">Changelog</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>Company</h5>
+      <ul>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Press</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>Resources</h5>
+      <ul>
+        <li><a href="#">Documentation</a></li>
+        <li><a href="#">Help Center</a></li>
+        <li><a href="#">Community</a></li>
+        <li><a href="#">Status</a></li>
+        <li><a href="#">Security</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-copy">© 2025 RewriteAI Inc. All rights reserved. Built with ❤️ and AI.</p>
+    <div class="footer-bottom-links">
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">Cookies</a>
+    </div>
+  </div>
+</footer>
+
+</div><!-- /wrapper -->
+
+<script>
+/* ═══════════════════════════════════════════
+   NEURAL CANVAS ANIMATION
+═══════════════════════════════════════════ */
+(function(){
+  const canvas = document.getElementById('neural-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, nodes=[], animId;
+  const NODE_COUNT = 60, MAX_DIST = 160;
+
+  function resize(){
+    W=canvas.width=window.innerWidth;
+    H=canvas.height=window.innerHeight;
+  }
+  function initNodes(){
+    nodes=[];
+    for(let i=0;i<NODE_COUNT;i++){
+      nodes.push({
+        x:Math.random()*W, y:Math.random()*H,
+        vx:(Math.random()-0.5)*0.5, vy:(Math.random()-0.5)*0.5,
+        r:Math.random()*2+1.5, pulse:Math.random()*Math.PI*2
+      });
+    }
+  }
+  function getColor(){
+    const t=document.documentElement.getAttribute('data-theme');
+    return t==='light'?'59,130,246':'59,130,246';
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const c=getColor();
+    nodes.forEach(n=>{
+      n.x+=n.vx; n.y+=n.vy;
+      if(n.x<0||n.x>W) n.vx*=-1;
+      if(n.y<0||n.y>H) n.vy*=-1;
+      n.pulse+=0.02;
+      const a=0.4+0.3*Math.sin(n.pulse);
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${c},${a})`;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,n.r*3,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${c},${a*0.08})`;
+      ctx.fill();
+    });
+    for(let i=0;i<nodes.length;i++){
+      for(let j=i+1;j<nodes.length;j++){
+        const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<MAX_DIST){
+          const a=(1-d/MAX_DIST)*0.35;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x,nodes[i].y);
+          ctx.lineTo(nodes[j].x,nodes[j].y);
+          ctx.strokeStyle=`rgba(${c},${a})`;
+          ctx.lineWidth=0.7;
+          ctx.stroke();
+        }
+      }
+    }
+    animId=requestAnimationFrame(draw);
+  }
+  resize(); initNodes(); draw();
+  window.addEventListener('resize',()=>{resize();initNodes()});
+})();
+
+/* ═══════════════════════════════════════════
+   MOUSE GLOW
+═══════════════════════════════════════════ */
+const mouseGlow=document.getElementById('mouse-glow');
+let mx=0,my=0,cx=0,cy=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+(function glowLoop(){
+  cx+=(mx-cx)*0.08; cy+=(my-cy)*0.08;
+  mouseGlow.style.left=cx+'px'; mouseGlow.style.top=cy+'px';
+  requestAnimationFrame(glowLoop);
+})();
+document.addEventListener('mouseleave',()=>mouseGlow.style.opacity='0');
+document.addEventListener('mouseenter',()=>mouseGlow.style.opacity='1');
+
+/* ═══════════════════════════════════════════
+   THEME TOGGLE
+═══════════════════════════════════════════ */
+function getSystemTheme(){return window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'}
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('rw-theme',t);
+  document.getElementById('theme-icon').className=t==='dark'?'fas fa-moon':'fas fa-sun';
+}
+const savedTheme=localStorage.getItem('rw-theme')||getSystemTheme();
+setTheme(savedTheme);
+document.getElementById('theme-toggle').addEventListener('click',()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  setTheme(cur==='dark'?'light':'dark');
+});
+window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',e=>{
+  if(!localStorage.getItem('rw-theme')) setTheme(e.matches?'dark':'light');
+});
+
+/* ═══════════════════════════════════════════
+   NAVBAR SCROLL
+═══════════════════════════════════════════ */
+const navbar=document.getElementById('navbar');
+window.addEventListener('scroll',()=>{
+  navbar.classList.toggle('scrolled',window.scrollY>40);
+});
+
+/* ═══════════════════════════════════════════
+   HAMBURGER
+═══════════════════════════════════════════ */
+const hamburger=document.getElementById('hamburger');
+const mobileMenu=document.getElementById('mobile-menu');
+hamburger.addEventListener('click',()=>{
+  hamburger.classList.toggle('active');
+  mobileMenu.classList.toggle('open');
+});
+function closeMobileMenu(){
+  hamburger.classList.remove('active');
+  mobileMenu.classList.remove('open');
+}
+
+/* ═══════════════════════════════════════════
+   TYPING EFFECT
+═══════════════════════════════════════════ */
+const typingPhrases=[
+  'Transform your writing instantly.',
+  'Fix grammar with one click.',
+  'Generate ideas effortlessly.',
+  'Summarize any content in seconds.',
+  'Improve your tone professionally.',
+  'Write 10× faster with AI.',
+];
+let tIdx=0, cIdx=0, typing=true;
+const typingEl=document.getElementById('typing-text');
+function typeLoop(){
+  const phrase=typingPhrases[tIdx];
+  if(typing){
+    typingEl.textContent=phrase.slice(0,cIdx+1);
+    cIdx++;
+    if(cIdx>=phrase.length){typing=false;setTimeout(typeLoop,2200);return}
+  } else {
+    typingEl.textContent=phrase.slice(0,cIdx-1);
+    cIdx--;
+    if(cIdx<=0){typing=true;tIdx=(tIdx+1)%typingPhrases.length;setTimeout(typeLoop,400);return}
+  }
+  setTimeout(typeLoop,typing?70:40);
+}
+setTimeout(typeLoop,1000);
+
+/* ═══════════════════════════════════════════
+   ANIMATED COUNTERS
+═══════════════════════════════════════════ */
+function animateCounter(el,target,dur=2000){
+  const isDecimal=target%1!==0;
+  let start=0, startTime=null;
+  function step(ts){
+    if(!startTime) startTime=ts;
+    const p=Math.min((ts-startTime)/dur,1);
+    const ease=1-Math.pow(1-p,3);
+    const val=start+(target-start)*ease;
+    if(isDecimal) el.textContent=val.toFixed(1);
+    else {
+      const v=Math.round(val);
+      el.textContent=v>=1000000?(v/1000000).toFixed(1)+'M':v>=1000?(v/1000).toFixed(0)+'K':v;
+    }
+    if(p<1) requestAnimationFrame(step);
+    else{if(isDecimal)el.textContent=target.toFixed(1);else{const v=target;el.textContent=v>=1000000?(v/1000000).toFixed(1)+'M':v>=1000?(v/1000).toFixed(0)+'K':v}}
+  }
+  requestAnimationFrame(step);
+}
+const countersObserver=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const el=e.target;
+      animateCounter(el,parseFloat(el.dataset.count));
+      countersObserver.unobserve(el);
+    }
+  });
+},{threshold:0.5});
+document.querySelectorAll('[data-count]').forEach(el=>countersObserver.observe(el));
+
+/* ═══════════════════════════════════════════
+   MARQUEE
+═══════════════════════════════════════════ */
+const companies=[
+  {name:'Notion',icon:'fas fa-cube'},{name:'Vercel',icon:'fas fa-triangle-exclamation'},
+  {name:'Linear',icon:'fas fa-circle-dot'},{name:'Framer',icon:'fas fa-f'},
+  {name:'Stripe',icon:'fab fa-stripe-s'},{name:'Figma',icon:'fab fa-figma'},
+  {name:'Slack',icon:'fab fa-slack'},{name:'GitHub',icon:'fab fa-github'},
+  {name:'OpenAI',icon:'fas fa-robot'},{name:'Anthropic',icon:'fas fa-a'},
+  {name:'Grammarly',icon:'fas fa-pen-nib'},{name:'Canva',icon:'fas fa-palette'},
+];
+const track=document.getElementById('marquee-track');
+const doubled=[...companies,...companies];
+doubled.forEach(c=>{
+  const div=document.createElement('div');
+  div.className='marquee-item';
+  div.innerHTML=`<i class="${c.icon}"></i>${c.name}`;
+  track.appendChild(div);
+});
+
+/* ═══════════════════════════════════════════
+   FEATURES GRID
+═══════════════════════════════════════════ */
+const featureData=[
+  {icon:'fas fa-wand-magic-sparkles',color:'c-blue',glow:'g-blue',title:'Content Rewriting',desc:'Instantly transform any text into polished, engaging content. Preserve meaning while elevating style, clarity, and impact.',tag:'AI-Powered'},
+  {icon:'fas fa-spell-check',color:'c-emerald',glow:'g-emerald',title:'Grammar Correction',desc:'Catch every typo, grammatical error, and awkward sentence. Powered by LanguageTool API for professional accuracy.',tag:'LanguageTool API'},
+  {icon:'fas fa-sliders',color:'c-violet',glow:'g-violet',title:'Tone Improvement',desc:'Shift from casual to professional, playful to authoritative. Match the right tone for every audience and context.',tag:'Multi-Tone'},
+  {icon:'fas fa-robot',color:'c-cyan',glow:'g-cyan',title:'AI Writing Assistant',desc:'Generate entire paragraphs, blog posts, emails, and more with contextual AI that understands your goals.',tag:'GPT-4 Powered'},
+  {icon:'fas fa-compress-alt',color:'c-amber',glow:'g-amber',title:'Smart Summarizer',desc:'Condense lengthy articles, reports, and documents into clear, actionable summaries in seconds.',tag:'Any Length'},
+  {icon:'fas fa-chart-line',color:'c-rose',glow:'g-rose',title:'Productivity Suite',desc:'Writing analytics, productivity insights, custom presets, and team collaboration tools to 10× your output.',tag:'Team Ready'},
+];
+const featGrid=document.getElementById('features-grid');
+featureData.forEach((f,i)=>{
+  const div=document.createElement('div');
+  div.className=`feature-card reveal delay-${(i%3)+1}`;
+  div.innerHTML=`
+    <div class="card-glow ${f.glow}"></div>
+    <div class="feature-icon ${f.color}"><i class="${f.icon}"></i></div>
+    <h3>${f.title}</h3>
+    <p>${f.desc}</p>
+    <span class="feature-tag">${f.tag}</span>
+  `;
+  featGrid.appendChild(div);
+});
+
+/* ═══════════════════════════════════════════
+   TESTIMONIALS
+═══════════════════════════════════════════ */
+const testiData=[
+  {stars:5,text:'RewriteAI completely changed how I produce content. What used to take me hours now takes minutes. The quality of rewrites is genuinely better than what I\'d write myself.',name:'Sarah Chen',role:'Content Lead @ Notion',color:'c-blue'},
+  {stars:5,text:'The grammar correction is incredibly accurate. I\'ve tried every tool out there and nothing comes close to the contextual understanding RewriteAI demonstrates.',name:'Marcus Okafor',role:'Technical Writer @ Stripe',color:'c-violet'},
+  {stars:5,text:'As a non-native English speaker, RewriteAI has been a game changer. My emails now sound completely natural and professional. My team can\'t believe the difference.',name:'Yuki Tanaka',role:'Product Manager @ Linear',color:'c-cyan'},
+  {stars:5,text:'The tone improvement feature alone is worth 10× the price. Being able to shift between formal and casual in one click saves me so much mental energy every day.',name:'Alex Rivera',role:'Marketing Director @ Vercel',color:'c-emerald'},
+  {stars:5,text:'I\'ve been using RewriteAI to summarize research papers for my PhD. It captures the nuance incredibly well. Absolutely indispensable for academic work.',name:'Dr. Priya Patel',role:'AI Researcher @ Stanford',color:'c-amber'},
+  {stars:5,text:'The API is clean, well-documented, and incredibly fast. Integrating RewriteAI into our publishing workflow took less than a day. Highly recommended.',name:'Tom Williams',role:'CTO @ WriteScale',color:'c-rose'},
+];
+const testiWrapper=document.getElementById('testi-wrapper');
+const testiDots=document.getElementById('testi-dots');
+let testiIdx=0;
+testiData.forEach((t,i)=>{
+  const card=document.createElement('div');
+  card.className='testi-card';
+  const stars='<i class="fas fa-star"></i>'.repeat(t.stars);
+  card.innerHTML=`
+    <div class="testi-stars">${stars}</div>
+    <p class="testi-text">"${t.text}"</p>
+    <div class="testi-author">
+      <div class="testi-avatar ${t.color}">${t.name[0]}</div>
+      <div><div class="testi-name">${t.name}</div><div class="testi-role">${t.role}</div></div>
+    </div>
+  `;
+  testiWrapper.appendChild(card);
+  const dot=document.createElement('div');
+  dot.className='testi-dot'+(i===0?' active':'');
+  dot.addEventListener('click',()=>goTesti(i));
+  testiDots.appendChild(dot);
+});
+function getVisibleCount(){return window.innerWidth<720?1:window.innerWidth<1024?2:3}
+function goTesti(idx){
+  const cnt=getVisibleCount();
+  const max=Math.max(0,testiData.length-cnt);
+  testiIdx=Math.max(0,Math.min(idx,max));
+  const w=testiWrapper.querySelector('.testi-card')?.offsetWidth||320;
+  testiWrapper.style.transform=`translateX(-${testiIdx*(w+20)}px)`;
+  document.querySelectorAll('.testi-dot').forEach((d,i)=>d.classList.toggle('active',i===testiIdx));
+}
+document.getElementById('testi-prev').addEventListener('click',()=>goTesti(testiIdx-1));
+document.getElementById('testi-next').addEventListener('click',()=>goTesti(testiIdx+1));
+window.addEventListener('resize',()=>goTesti(testiIdx));
+setInterval(()=>goTesti((testiIdx+1)%(testiData.length-getVisibleCount()+1)),5000);
+
+/* ═══════════════════════════════════════════
+   FAQ
+═══════════════════════════════════════════ */
+const faqData=[
+  {q:'Is RewriteAI free to use?',a:'Yes! RewriteAI offers a generous free tier with 50 rewrites per month. Our Pro plan at $12/month offers unlimited rewrites, priority processing, and API access.'},
+  {q:'Which AI models power RewriteAI?',a:'RewriteAI uses state-of-the-art models via OpenRouter, including GPT-4o, Claude 3.5 Sonnet, and Llama 3.1. You can select your preferred model in settings.'},
+  {q:'How accurate is the grammar correction?',a:'Our grammar correction is powered by LanguageTool\'s professional API, which supports 25+ languages and catches 97%+ of grammar, spelling, and style errors.'},
+  {q:'Is my content kept private?',a:'Absolutely. We use end-to-end encryption and never store your content on our servers. Your text is processed in real-time and immediately discarded after the response.'},
+  {q:'Can I use RewriteAI via API?',a:'Yes! We offer a full REST API with clear documentation. You can integrate RewriteAI into any application, workflow, or tool. API keys are available on Pro and Team plans.'},
+  {q:'What languages are supported?',a:'RewriteAI supports 50+ languages for rewriting and grammar correction, including English, Spanish, French, German, Japanese, Chinese, Arabic, and many more.'},
+];
+const faqList=document.getElementById('faq-list');
+faqData.forEach((f,i)=>{
+  const item=document.createElement('div');
+  item.className='faq-item reveal delay-'+(i%3+1);
+  item.innerHTML=`
+    <button class="faq-q">
+      <span>${f.q}</span>
+      <div class="faq-icon"><i class="fas fa-plus"></i></div>
+    </button>
+    <div class="faq-a"><div class="faq-a-inner">${f.a}</div></div>
+  `;
+  item.querySelector('.faq-q').addEventListener('click',()=>{
+    const wasOpen=item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(x=>x.classList.remove('open'));
+    if(!wasOpen) item.classList.add('open');
+  });
+  faqList.appendChild(item);
+});
+
+/* ═══════════════════════════════════════════
+   SCROLL REVEAL
+═══════════════════════════════════════════ */
+const revealObserver=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+    }
+  });
+},{threshold:0.1,rootMargin:'0px 0px -50px 0px'});
+function attachReveal(){
+  document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el=>revealObserver.observe(el));
+}
+attachReveal();
+// Re-attach for dynamically added elements
+const mutObs=new MutationObserver(()=>attachReveal());
+mutObs.observe(document.body,{childList:true,subtree:true});
+
+/* ═══════════════════════════════════════════
+   PLAYGROUND — API CONFIG
+═══════════════════════════════════════════ */
+function openApiModal(){document.getElementById('api-modal').classList.add('open')}
+function closeApiModal(){document.getElementById('api-modal').classList.remove('open')}
+document.getElementById('api-modal').addEventListener('click',function(e){if(e.target===this)closeApiModal()});
+function saveApiKeys(){
+  const key=document.getElementById('openrouter-key').value.trim();
+  if(key){
+    localStorage.setItem('rw-or-key',key);
+    updateApiStatus(true);
+    showToast('API key saved securely ✓','success');
+  } else {
+    showToast('Please enter a valid API key','error');
+    return;
+  }
+  closeApiModal();
+}
+function updateApiStatus(connected){
+  const btn=document.getElementById('api-status-btn');
+  const txt=document.getElementById('api-status-text');
+  btn.classList.toggle('connected',connected);
+  txt.textContent=connected?'API Connected':'Configure API';
+}
+// Check on load
+if(localStorage.getItem('rw-or-key')) updateApiStatus(true);
+
+/* ═══════════════════════════════════════════
+   PLAYGROUND — LOGIC
+═══════════════════════════════════════════ */
+let currentAction='rewrite';
+document.querySelectorAll('.pg-btn[data-action]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.pg-btn[data-action]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentAction=btn.dataset.action;
+  });
+});
+// Set default active
+document.querySelector('.pg-btn[data-action="rewrite"]').classList.add('active');
+
+// Char counter
+const pgInput=document.getElementById('pg-input');
+const pgOutput=document.getElementById('pg-output');
+pgInput.addEventListener('input',()=>{
+  document.getElementById('input-chars').textContent=pgInput.value.length;
+});
+pgOutput.addEventListener('input',()=>{
+  document.getElementById('output-chars').textContent=pgOutput.value.length;
+});
+
+function buildPrompt(action,text){
+  const prompts={
+    rewrite:`You are an expert writing assistant. Rewrite the following text to make it clearer, more engaging, and more professional while preserving the original meaning. Return only the rewritten text, no explanations.\n\nText: ${text}`,
+    grammar:`You are a professional grammar and writing editor. Fix all grammar, spelling, punctuation, and style errors in the following text. Preserve the author's voice and intent. Return only the corrected text.\n\nText: ${text}`,
+    tone:`You are a tone expert. Improve the tone of the following text to make it more professional, confident, and engaging. Eliminate hedging language and passive voice where appropriate. Return only the improved text.\n\nText: ${text}`,
+    summarize:`Summarize the following text concisely and clearly. Capture the key points and essential information in a well-structured summary. Return only the summary.\n\nText: ${text}`,
+    ideas:`Generate 5 creative and actionable ideas or variations based on the following content. Format each idea on a new line with a number. Return only the ideas.\n\nContent: ${text}`,
+  };
+  return prompts[action]||prompts.rewrite;
+}
+
+async function runAction(){
+  const text=pgInput.value.trim();
+  if(!text){showToast('Please enter some text first','error');return}
+  if(text.length>5000){showToast('Text exceeds 5000 character limit','error');return}
+
+  const apiKey=localStorage.getItem('rw-or-key');
+
+  const runBtn=document.getElementById('run-btn');
+  runBtn.innerHTML='<i class="fas fa-circle-notch spin"></i> Processing…';
+  runBtn.disabled=true;
+
+  // Show shimmer
+  pgOutput.style.display='none';
+  const shimmerDiv=document.createElement('div');
+  shimmerDiv.id='pg-shimmer';
+  shimmerDiv.style.cssText='flex:1;padding:14px;display:flex;flex-direction:column;gap:8px';
+  for(let i=0;i<6;i++){
+    const line=document.createElement('div');
+    line.className='shimmer shimmer-line';
+    line.style.width=`${60+Math.random()*35}%`;
+    shimmerDiv.appendChild(line);
+  }
+  pgOutput.parentNode.insertBefore(shimmerDiv,pgOutput);
+
+  try {
+    // Try LanguageTool for grammar (free, no key needed)
+    if(currentAction==='grammar'){
+      const result=await fixGrammarLT(text);
+      showOutput(result);
+      return;
+    }
+
+    if(!apiKey){
+      // Demo mode with simulated response
+      await new Promise(r=>setTimeout(r,1800));
+      const demoResponses={
+        rewrite:`The meeting yielded disappointing results, leaving all participants frustrated with the outcomes.`,
+        tone:`The engagement metrics indicate significant growth opportunities that warrant immediate strategic attention.`,
+        summarize:`The text discusses key themes and outcomes. Main points include the central argument and supporting evidence presented by the author.`,
+        ideas:`1. Expand the core concept into a multi-part series with deeper exploration of each aspect.\n2. Create an interactive version that allows readers to engage directly with the content.\n3. Develop a case study format using real-world examples to illustrate each point.\n4. Transform the content into a visual infographic for better shareability.\n5. Adapt the ideas into a workshop or training curriculum format.`,
+      };
+      showOutput(demoResponses[currentAction]||`[Demo Mode] Your text has been ${currentAction}d successfully. Configure your OpenRouter API key to access live AI processing.`);
+      showToast('Demo mode — add API key for live AI','info');
+      return;
+    }
+
+    const response=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+      method:'POST',
+      headers:{
+        'Authorization':`Bearer ${apiKey}`,
+        'Content-Type':'application/json',
+        'HTTP-Referer':'https://rewriteai.app',
+        'X-Title':'RewriteAI'
+      },
+      body:JSON.stringify({
+        model:'openai/gpt-4o-mini',
+        messages:[{role:'user',content:buildPrompt(currentAction,text)}],
+        max_tokens:1024,
+        temperature:0.7
+      })
+    });
+
+    if(!response.ok){
+      const err=await response.json().catch(()=>({}));
+      throw new Error(err.error?.message||`API error ${response.status}`);
+    }
+
+    const data=await response.json();
+    const output=data.choices?.[0]?.message?.content||'No response received.';
+    showOutput(output);
+    showToast('AI processing complete ✓','success');
+
+  } catch(err){
+    showOutput('');
+    pgOutput.style.display='';
+    pgOutput.placeholder='Error: '+err.message+'\n\nPlease check your API key and try again.';
+    showToast('Error: '+err.message,'error');
+  } finally {
+    const s=document.getElementById('pg-shimmer');
+    if(s) s.remove();
+    pgOutput.style.display='';
+    runBtn.innerHTML='<i class="fas fa-bolt"></i> Run AI';
+    runBtn.disabled=false;
+  }
+}
+
+function showOutput(text){
+  const s=document.getElementById('pg-shimmer');
+  if(s) s.remove();
+  pgOutput.style.display='';
+  pgOutput.value='';
+  document.getElementById('output-chars').textContent='0';
+  // Typewriter output effect
+  let i=0;
+  function type(){
+    if(i<text.length){
+      pgOutput.value+=text[i];
+      document.getElementById('output-chars').textContent=pgOutput.value.length;
+      i++;
+      setTimeout(type,8);
+    }
+  }
+  type();
+}
+
+async function fixGrammarLT(text){
+  try{
+    const body=new URLSearchParams({text,language:'en-US'});
+    const response=await fetch('https://api.languagetool.org/v2/check',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+    if(!response.ok) throw new Error('LanguageTool API error');
+    const data=await response.json();
+    let fixed=text;
+    // Apply corrections in reverse order to preserve offsets
+    const matches=[...data.matches].reverse();
+    for(const match of matches){
+      if(match.replacements&&match.replacements.length>0){
+        const before=fixed.slice(0,match.offset);
+        const after=fixed.slice(match.offset+match.length);
+        fixed=before+match.replacements[0].value+after;
+      }
+    }
+    const count=data.matches.length;
+    showToast(count>0?`Fixed ${count} issue${count!==1?'s':''} ✓`:'No issues found — text looks great!','success');
+    return fixed;
+  } catch(e){
+    throw new Error('LanguageTool: '+e.message);
+  }
+}
+
+function copyOutput(){
+  const txt=pgOutput.value;
+  if(!txt){showToast('Nothing to copy yet','error');return}
+  navigator.clipboard.writeText(txt).then(()=>showToast('Copied to clipboard ✓','success')).catch(()=>{
+    pgOutput.select();document.execCommand('copy');showToast('Copied ✓','success');
+  });
+}
+function clearAll(){
+  pgInput.value='';pgOutput.value='';
+  document.getElementById('input-chars').textContent='0';
+  document.getElementById('output-chars').textContent='0';
+  pgOutput.placeholder='Your AI-enhanced content will appear here…';
+  showToast('Cleared','info');
+}
+
+/* ═══════════════════════════════════════════
+   SUBSCRIBE
+═══════════════════════════════════════════ */
+function handleSubscribe(){
+  const email=document.getElementById('sub-email').value.trim();
+  const re=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if(!re.test(email)){showToast('Please enter a valid email address','error');return}
+  showToast(`Welcome aboard! We'll be in touch at ${email} 🎉`,'success');
+  document.getElementById('sub-email').value='';
+}
+
+/* ═══════════════════════════════════════════
+   TOAST NOTIFICATIONS
+═══════════════════════════════════════════ */
+function showToast(msg,type='info'){
+  const container=document.getElementById('toast-container');
+  const icons={success:'fas fa-circle-check',error:'fas fa-circle-xmark',info:'fas fa-circle-info'};
+  const toast=document.createElement('div');
+  toast.className=`toast ${type}`;
+  toast.innerHTML=`<i class="${icons[type]} toast-icon ${type}"></i><span>${msg}</span>`;
+  container.appendChild(toast);
+  setTimeout(()=>{
+    toast.classList.add('hide');
+    setTimeout(()=>toast.remove(),300);
+  },3500);
+}
+
+/* ═══════════════════════════════════════════
+   PARALLAX HERO ORBS
+═══════════════════════════════════════════ */
+window.addEventListener('scroll',()=>{
+  const y=window.scrollY;
+  document.querySelectorAll('.orb').forEach((orb,i)=>{
+    const speed=[0.3,0.5,0.2][i]||0.3;
+    orb.style.transform=`translateY(${y*speed}px)`;
+  });
+});
+
+/* ═══════════════════════════════════════════
+   MAGNETIC BUTTONS (subtle)
+═══════════════════════════════════════════ */
+document.querySelectorAll('.btn-hero-primary,.btn-hero-secondary').forEach(btn=>{
+  btn.addEventListener('mousemove',function(e){
+    const rect=this.getBoundingClientRect();
+    const dx=e.clientX-rect.left-rect.width/2;
+    const dy=e.clientY-rect.top-rect.height/2;
+    this.style.transform=`translate(${dx*0.08}px,${dy*0.08}px) translateY(-2px)`;
+  });
+  btn.addEventListener('mouseleave',function(){
+    this.style.transform='';
+  });
+});
+
+/* ═══════════════════════════════════════════
+   SMOOTH HASH NAVIGATION
+═══════════════════════════════════════════ */
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    const id=a.getAttribute('href');
+    if(id==='#') return;
+    const el=document.querySelector(id);
+    if(el){e.preventDefault();el.scrollIntoView({behavior:'smooth'})}
+  });
+});
+
+/* ═══════════════════════════════════════════
+   KEYBOARD SHORTCUT: Cmd+Enter to run
+═══════════════════════════════════════════ */
+document.getElementById('pg-input').addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();runAction()}
+});
+
+</script>
+</body>
+</html>
